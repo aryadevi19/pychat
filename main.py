@@ -98,5 +98,17 @@ class HybridPyChat:
     def extract_from_url(self,url):
         try:
             headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-            response=request.
+            response=requests.get(url,headers=headers,timeout=10)
+            response.raise_for_status()
+            soup=BeautifulSoup(response.content,'html,parser')
+            for script in soup(['scripts','style']):
+                script.decompose()
+            text=soup.get_text()
+            lines = (line.strip() for line in text.splitlines())
+            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+            text = ' '.join(chunk for chunk in chunks if chunk)
+            return text[:2000]
+        except Exception as e:
+            print(f"error extracting {url} with {e}")
+            return ""
 
