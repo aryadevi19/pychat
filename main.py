@@ -111,4 +111,46 @@ class HybridPyChat:
         except Exception as e:
             print(f"error extracting {url} with {e}")
             return ""
+    def search_web(self,query):
+        if not self.web_search_enabled:
+            return None
+        print("searching the web...")
+        if query in self.query_cache:
+            print("query found in cache")
+            return self.query_cache[query]
+        #code to search the web
+        search_query=f"{query} in python programming language "
+        encoded_query=quote(search_query)
+        browser_url=f"https://api.duckduckgo.com/?q={encoded_query}&format=json&no_html=1&skip_disambig=1"
+        response=requests.get(browser_url,timeout=10)
+        data=response.json()
+        answer_text=""
+        source_url=""
+        if data.get('AbstractText'):
+            answer_text=data['AbstractText']
+            source_url=data['AbstractURL']
+        elif data.get('Answer'):
+            answer_text=data['Answer']
+        elif data.get('Results') and len(data['Results'])>0:
+            first_result=data['Results'][0]
+            answer_text=first_result.get('Text','')
+            source_url=first_result.get('FirstURL','')
+        if source_url and len(answer_text)<200:
+            detailed_text=self.extract_from_url(source_url)
+            if detailed_text:
+                sentences=detailed_text.split('.')[:3]
+                answer_text='. '.join(sentences)+'.'
+        if answer_text and len(answer_text.strip()) > 50:
+            result = {
+                    'answer': answer_text.strip(),
+                    'source': 'web',
+                    'confidence': 0.7,  # Moderate confidence for web results
+                    'source_url': source_url
+                }
+       
+
+
+
+
+
 
